@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { readFileSync } from 'fs';
 import * as mysql from 'mysql2/promise';
 import { APP_CONFIG, AppConfig } from '../config/app.config';
 import {
@@ -19,8 +20,18 @@ import { HmacSignatureVerifier } from './security/hmac-signature.verifier';
     {
       provide: MYSQL_POOL,
       inject: [APP_CONFIG],
-      useFactory: (c: AppConfig) =>
-        mysql.createPool({ ...c.db, waitForConnections: true, connectionLimit: 10, timezone: 'Z' }),
+      useFactory: (c: AppConfig) => mysql.createPool({
+        ...c.db,
+        ssl: c.dbTls.enabled
+          ? {
+            rejectUnauthorized: true,
+            ...(c.dbTls.caPath ? { ca: readFileSync(c.dbTls.caPath) } : {}),
+          }
+          : undefined,
+        waitForConnections: true,
+        connectionLimit: 10,
+        timezone: 'Z',
+      }),
     },
     { provide: LOAN_REPOSITORY, inject: [MYSQL_POOL], useFactory: (p: any) => new MysqlLoanRepository(p) },
     { provide: PAYMENT_REPOSITORY, inject: [MYSQL_POOL], useFactory: (p: any) => new MysqlPaymentRepository(p) },

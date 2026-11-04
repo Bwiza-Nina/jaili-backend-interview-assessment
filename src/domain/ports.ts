@@ -25,7 +25,7 @@ export interface PaymentRepository {
   markSuccess(id: number, providerTs: Date | null): Promise<void>;
   markFailed(id: number, reason: string, providerTs: Date | null): Promise<void>;
   recordDispatch(provider: Provider, transactionId: string, providerReference: string | null): Promise<void>;
-  findStalePending(olderThanMinutes: number, limit: number): Promise<{ provider: Provider; transactionId: string }[]>;
+  findStalePending(olderThanMinutes: number, limit: number): Promise<{ provider: Provider; transactionId: string; currency: string }[]>;
   findById(id: number): Promise<Payment | null>;
   list(f: PaymentFilter): Promise<{ data: Payment[]; total: number }>;
 }
@@ -65,7 +65,7 @@ export interface ProviderStatus { status: PaymentStatus; reason?: string }
 export interface PaymentGateway {
   readonly provider: Provider;
   requestPayment(r: PaymentRequest): Promise<{ providerReference: string }>;
-  getStatus(transactionId: string): Promise<ProviderStatus>;
+  getStatus(transactionId: string, currency: string): Promise<ProviderStatus>;
 }
 
 export interface PaymentGatewayResolver {

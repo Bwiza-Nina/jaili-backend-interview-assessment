@@ -53,7 +53,7 @@ export class ReconcileUseCase {
     const stale = await this.payments.findStalePending(this.config.worker.pendingTimeoutMin, 50);
     for (const p of stale) {
       try {
-        const s = await this.gateways.resolve(p.provider).getStatus(p.transactionId);
+        const s = await this.gateways.resolve(p.provider).getStatus(p.transactionId, p.currency);
         if (s.status !== PaymentStatus.PENDING) {
           await this.apply.execute({
             provider: p.provider, transactionId: p.transactionId, status: s.status, reason: s.reason,

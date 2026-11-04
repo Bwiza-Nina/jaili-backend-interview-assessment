@@ -49,7 +49,7 @@ export class MtnGateway implements PaymentGateway {
     return { providerReference: r.transactionId };
   }
 
-  async getStatus(transactionId: string): Promise<ProviderStatus> {
+  async getStatus(transactionId: string, _currency: string): Promise<ProviderStatus> {
     if (this.config.providers.mock) return { status: PaymentStatus.PENDING };
     const token = await this.getToken();
     const { data } = await callProvider(`${this.c.baseUrl}/collection/v1_0/requesttopay/${transactionId}`, {

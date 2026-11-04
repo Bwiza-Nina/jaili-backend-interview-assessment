@@ -8,6 +8,7 @@ export interface AppConfig {
   internalApiKey: string;
   callbackSecrets: Record<string, string>;
   db: { host: string; port: number; user: string; password: string; database: string };
+  dbTls: { enabled: boolean; caPath: string };
   providers: {
     mock: boolean;
     callbackBase: string;
@@ -44,6 +45,7 @@ export function loadConfig(): AppConfig {
       password: e('DB_PASSWORD'),
       database: e('DB_NAME'),
     },
+    dbTls: { enabled: e('DB_SSL') === 'true', caPath: e('DB_SSL_CA') },
     providers: {
       mock: e('PROVIDER_MOCK', 'true') === 'true',
       callbackBase: e('PUBLIC_CALLBACK_BASE_URL'),

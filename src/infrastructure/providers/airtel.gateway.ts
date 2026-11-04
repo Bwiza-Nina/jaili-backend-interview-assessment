@@ -38,11 +38,11 @@ export class AirtelGateway implements PaymentGateway {
     return { providerReference: r.transactionId };
   }
 
-  async getStatus(transactionId: string): Promise<ProviderStatus> {
+  async getStatus(transactionId: string, currency: string): Promise<ProviderStatus> {
     if (this.config.providers.mock) return { status: PaymentStatus.PENDING };
     const token = await this.getToken();
     const { data } = await callProvider(`${this.c.baseUrl}/standard/v1/payments/${transactionId}`, {
-      headers: { Authorization: `Bearer ${token}`, 'X-Country': this.c.country, 'X-Currency': 'RWF' },
+      headers: { Authorization: `Bearer ${token}`, 'X-Country': this.c.country, 'X-Currency': currency },
     });
     const code = data?.data?.transaction?.status; // TS = success, TF = failed, else in progress
     return { status: code === 'TS' ? PaymentStatus.SUCCESS : code === 'TF' ? PaymentStatus.FAILED : PaymentStatus.PENDING };

@@ -96,10 +96,14 @@ export class MysqlPaymentRepository implements PaymentRepository {
   }
   async findStalePending(olderThanMinutes: number, limit: number) {
     const rows = await select(this.db,
-      `SELECT provider, transaction_id FROM payments
+      `SELECT provider, transaction_id, currency FROM payments
        WHERE status='PENDING' AND created_at < (NOW() - INTERVAL ? MINUTE) ORDER BY id LIMIT ?`,
       [olderThanMinutes, limit]);
-    return rows.map((r) => ({ provider: r.provider as Provider, transactionId: r.transaction_id as string }));
+    return rows.map((r) => ({
+      provider: r.provider as Provider,
+      transactionId: r.transaction_id as string,
+      currency: r.currency as string,
+    }));
   }
   async findById(id: number) {
     const rows = await select(this.db, 'SELECT * FROM payments WHERE id=?', [id]);
@@ -165,7 +169,7 @@ export class MysqlCallbackEventRepository implements CallbackEventRepository {
   async findReprocessable(limit: number): Promise<StoredCallbackEvent[]> {
     const rows = await select(this.db,
       `SELECT id, payload FROM callback_events
-       WHERE processed=0 AND outcome='ERROR' AND received_at < (NOW() - INTERVAL 30 SECOND)
+       WHERE processed=0 AND outcome IN ('RECEIVED', 'ERROR') AND received_at < (NOW() - INTERVAL 30 SECOND)
        ORDER BY id LIMIT ?`, [limit]);
     return rows.map((r) => ({
       id: Number(r.id),
