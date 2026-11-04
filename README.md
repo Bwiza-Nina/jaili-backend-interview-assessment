@@ -73,7 +73,7 @@ Requirements: Node.js 20+, npm, Docker with Docker Compose, and a MySQL 8.4 serv
 
    ```sh
    docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE"' \
-     < database/migrations/001_initial_schema.sql
+     < database/init/001_initial_schema.sql
    docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE"' \
      < database/seed.sql
    ```
