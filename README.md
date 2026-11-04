@@ -57,6 +57,21 @@ Apply [`database/migrations/001_initial_schema.sql`](database/migrations/001_ini
 
 All tables use InnoDB. The service relies on transactions and `SELECT ... FOR UPDATE` row locks; do not use a storage engine that does not support them. The initial migration is idempotent for a new/compatible database, but `CREATE TABLE IF NOT EXISTS` does not upgrade an existing table. Use reviewed, versioned migrations for later schema changes.
 
+### Existing UUID-schema database returns HTTP 500
+
+The current API expects numeric auto-increment IDs. If a database was initialized by an earlier UUID-based version, `GET /health` may still return `200` even though payment requests fail with a MySQL error such as `Field 'id' doesn't have a default value`. Health checks database connectivity, not table compatibility.
+
+Do not rerun the initial migration expecting it to alter existing tables: `CREATE TABLE IF NOT EXISTS` leaves them unchanged. First take a verified backup and inspect the schema and data. For a local/demo database with numeric loan IDs and no rows in `payments`, `loan_ledger`, `loan_events`, or `callback_events`, the data-preserving one-time conversion is in [`database/maintenance/upgrade-legacy-uuid-schema.sql`](database/maintenance/upgrade-legacy-uuid-schema.sql). Confirm those four tables are empty before running it; stop the API during the change:
+
+```sh
+docker compose stop api
+docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE"' \
+  < database/maintenance/upgrade-legacy-uuid-schema.sql
+docker compose start api
+```
+
+It preserves the loan row and changes the IDs/foreign keys to the format expected by this API. **Do not run it on a fresh schema, on a database with payment history, or in production without a reviewed migration plan.** For other legacy data, write and verify a tailored migration that preserves and maps every existing identifier.
+
 ## Run locally
 
 Requirements: Node.js 20+, npm, Docker with Docker Compose, and a MySQL 8.4 server if not using Compose.
